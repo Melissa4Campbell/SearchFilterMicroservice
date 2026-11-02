@@ -20,6 +20,23 @@ def ok_reply(results):
     return {"status": "ok", "count": len(results), "results": results}
 
 
+def describe_request(request):
+    """Make a short summary of a request for the message in the window."""
+    if not isinstance(request, dict):
+        return "something that is not a request"
+    text = "action = " + str(request.get("action"))
+    if isinstance(request.get("records"), list):
+        text += ", " + str(len(request["records"])) + " records"
+    return text
+
+
+def describe_reply(reply):
+    """Make a short summary of a reply for the message in the window."""
+    if reply["status"] == "ok":
+        return "status = ok, count = " + str(reply["count"])
+    return "status = error, message = " + reply["message"]
+
+
 def record_contains_term(record, term):
     """Return True if the term appears in any text field of the record.
     Upper or lower case does not matter."""
@@ -127,16 +144,17 @@ def main():
             if socket.poll(500) == 0:
                 continue
             message = socket.recv_string()
-            print("Received a request: " + message[:100])
             try:
                 request = json.loads(message)
+                print("Received a request: " + describe_request(request))
                 reply = handle_request(request)
             except json.JSONDecodeError:
+                print("Received a request that is not valid JSON text")
                 reply = error_reply("Request must be valid JSON text")
             except Exception as problem:
                 reply = error_reply("Something went wrong: " + str(problem))
             socket.send_string(json.dumps(reply))
-            print("Sent a reply: " + json.dumps(reply)[:100])
+            print("Sent a reply: " + describe_reply(reply))
     except KeyboardInterrupt:
         print("Search/Filter microservice stopped.")
     finally:
