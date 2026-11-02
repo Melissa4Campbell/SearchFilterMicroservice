@@ -72,6 +72,7 @@ def filter_by_date(records, start, end):
             results.append(record)
     return results
 
+
 def handle_request(request):
     """Look at one request and return the reply (a dictionary)."""
     if not isinstance(request, dict):
@@ -126,6 +127,7 @@ def main():
             if socket.poll(500) == 0:
                 continue
             message = socket.recv_string()
+            print("Received a request: " + message[:100])
             try:
                 request = json.loads(message)
                 reply = handle_request(request)
@@ -134,6 +136,7 @@ def main():
             except Exception as problem:
                 reply = error_reply("Something went wrong: " + str(problem))
             socket.send_string(json.dumps(reply))
+            print("Sent a reply: " + json.dumps(reply)[:100])
     except KeyboardInterrupt:
         print("Search/Filter microservice stopped.")
     finally:
